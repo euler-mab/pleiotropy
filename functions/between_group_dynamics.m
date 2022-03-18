@@ -1,9 +1,9 @@
 
-function [ n_group_t_y, z_bar_group_t, n_t, z_bar_t, n_y, z_bar_y ] = betweenGroupDynamics(directory, two_cell_experiment, gamma_group, lambda_group, K_group, s_group, c_group, alpha_group, cooperation_experiment, y_0, y_by, y_end, rho, K, s, phi, mu, nu)
+function [ n_group_t_y, z_bar_group_t, n_t, z_bar_t, n_y, z_bar_y ] = between_group_dynamics(two_cell_experiment, lambda, K_g, s_g, c_g, alpha, cooperation_experiment, t_0, t_by, t_end, rho, K, s_c, phi, mu, nu, num_traits, num_types, num_group_traits, num_group_types, Z)
 
 %% Load within group files
 
-listing = dir([directory, '/processed_results/']);
+listing = dir('processed_cell_results/');
 
 file_list = {listing.name};
 file_list = file_list(3:end);
@@ -11,7 +11,7 @@ file_list = file_list(3:end);
 search1 = sprintf('two%d_coop%d', two_cell_experiment, cooperation_experiment);
 search1 = strrep(search1, '.', '-');
 
-search2 = sprintf('tend%d_rho%g_K%d_s%g_p%g_mu%g_nu%g', y_end, rho, K, s, phi, mu, nu);
+search2 = sprintf('tend%d_rho%g_K%d_s%g_p%g_mu%g_nu%g', t_end, rho, K, s_c, phi, mu, nu);
 search2 = strrep(search2, '.', '-');
 
 idx_files1 = ~cellfun(@isempty, strfind(file_list, search1));
@@ -21,7 +21,7 @@ idx_files = logical(idx_files1 .* idx_files2);
 
 file_list = file_list(idx_files);
 
-file = load([directory, '/processed_results/', file_list{1}], 'n_y', 'N_y', 'x_y', 'z_bar_y');
+file = load(['processed_cell_results/', file_list{1}], 'n_y', 'N_y', 'x_y', 'z_bar_y');
 n_y = file.n_y;
 N_y = file.N_y;
 x_y = file.x_y;
@@ -29,41 +29,27 @@ z_bar_y = file.z_bar_y;
 
 %% Within-group calculated parameters
 
-gamma = nu * mu;
-
-num_traits = 3;
-num_types = 2^num_traits;
-
-Z = [
-    0, 0, 0;
-    0, 0, 1;
-    0, 1, 0;
-    0, 1, 1;
-    1, 0, 0;
-    1, 0, 1;
-    1, 1, 0;
-    1, 1, 1
-    ];
+numu = nu * mu;
 
 Q = [
-    [(1 - gamma) * (1 - gamma) * (1 - gamma), (1 - gamma) * (1 - gamma) * gamma, (1 - gamma) * gamma * (1 - gamma), (1 - gamma) * gamma * gamma, gamma * (1 - gamma) * (1 - gamma), gamma * (1 - gamma) * gamma, gamma * gamma * (1 - gamma), gamma * gamma * gamma];
-    [(1 - gamma) * (1 - gamma) * mu, (1 - gamma) * (1 - gamma) * (1 - mu), (1 - gamma) * gamma * mu, (1 - gamma) * gamma * (1 - mu), gamma * (1 - gamma) * mu, gamma * (1 - gamma) * (1 - mu), gamma * gamma * mu, gamma * gamma * (1 - mu)];
-    [(1 - gamma) * mu * (1 - gamma), (1 - gamma) * mu * gamma, (1 - gamma) * (1 - mu) * (1 - gamma), (1 - gamma) * (1 - mu) * gamma, gamma * mu * (1 - gamma), gamma * mu * gamma, gamma * (1 - mu) * (1 - gamma), gamma * (1 - mu) * gamma];
-    [(1 - gamma) * mu * mu, (1 - gamma) * mu * (1 - mu), (1 - gamma) * (1 - mu) * mu, (1 - gamma) * (1 - mu) * (1 - mu), gamma * mu * mu, gamma * mu * (1 - mu), gamma * (1 - mu) * mu, gamma * (1 - mu) * (1 - mu)];
-    [mu * (1 - gamma) * (1 - gamma), mu * (1 - gamma) * gamma, mu * gamma * (1 - gamma), mu * gamma * gamma, (1 - mu) * (1 - gamma) * (1 - gamma), (1 - mu) * (1 - gamma) * gamma, (1 - mu) * gamma * (1 - gamma), (1 - mu) * gamma * gamma];
-    [mu * (1 - gamma) * mu, mu * (1 - gamma) * (1 - mu), mu * gamma * mu, mu * gamma * (1 - mu), (1 - mu) * (1 - gamma) * mu, (1 - mu) * (1 - gamma) * (1 - mu), (1 - mu) * gamma * mu, (1 - mu) * gamma * (1 - mu)];
-    [mu * mu * (1 - gamma), mu * mu * gamma, mu * (1 - mu) * (1 - gamma), mu * (1 - mu) * gamma, (1 - mu) * mu * (1 - gamma), (1 - mu) * mu * gamma, (1 - mu) * (1 - mu) * (1 - gamma), (1 - mu) * (1 - mu) * gamma];
+    [(1 - numu) * (1 - numu) * (1 - numu), (1 - numu) * (1 - numu) * numu, (1 - numu) * numu * (1 - numu), (1 - numu) * numu * numu, numu * (1 - numu) * (1 - numu), numu * (1 - numu) * numu, numu * numu * (1 - numu), numu * numu * numu];
+    [(1 - numu) * (1 - numu) * mu, (1 - numu) * (1 - numu) * (1 - mu), (1 - numu) * numu * mu, (1 - numu) * numu * (1 - mu), numu * (1 - numu) * mu, numu * (1 - numu) * (1 - mu), numu * numu * mu, numu * numu * (1 - mu)];
+    [(1 - numu) * mu * (1 - numu), (1 - numu) * mu * numu, (1 - numu) * (1 - mu) * (1 - numu), (1 - numu) * (1 - mu) * numu, numu * mu * (1 - numu), numu * mu * numu, numu * (1 - mu) * (1 - numu), numu * (1 - mu) * numu];
+    [(1 - numu) * mu * mu, (1 - numu) * mu * (1 - mu), (1 - numu) * (1 - mu) * mu, (1 - numu) * (1 - mu) * (1 - mu), numu * mu * mu, numu * mu * (1 - mu), numu * (1 - mu) * mu, numu * (1 - mu) * (1 - mu)];
+    [mu * (1 - numu) * (1 - numu), mu * (1 - numu) * numu, mu * numu * (1 - numu), mu * numu * numu, (1 - mu) * (1 - numu) * (1 - numu), (1 - mu) * (1 - numu) * numu, (1 - mu) * numu * (1 - numu), (1 - mu) * numu * numu];
+    [mu * (1 - numu) * mu, mu * (1 - numu) * (1 - mu), mu * numu * mu, mu * numu * (1 - mu), (1 - mu) * (1 - numu) * mu, (1 - mu) * (1 - numu) * (1 - mu), (1 - mu) * numu * mu, (1 - mu) * numu * (1 - mu)];
+    [mu * mu * (1 - numu), mu * mu * numu, mu * (1 - mu) * (1 - numu), mu * (1 - mu) * numu, (1 - mu) * mu * (1 - numu), (1 - mu) * mu * numu, (1 - mu) * (1 - mu) * (1 - numu), (1 - mu) * (1 - mu) * numu];
     [mu * mu * mu, mu * mu * (1 - mu), mu * (1 - mu) * mu, mu * (1 - mu) * (1 - mu), (1 - mu) * mu * mu, (1 - mu) * mu  * (1 - mu), (1 - mu) * (1 - mu) * mu, (1 - mu) * (1 - mu) * (1 - mu)];
     ];
 
 P = [
-    [(1 - gamma) * (1 - gamma) * (1 - gamma), (1 - gamma) * (1 - gamma) * gamma, (1 - gamma) * gamma * (1 - gamma), (1 - gamma) * gamma * gamma, gamma * (1 - gamma) * (1 - gamma), gamma * (1 - gamma) * gamma, gamma * gamma * (1 - gamma), gamma * gamma * gamma];
-    [(1 - gamma) * (1 - gamma) * mu, (1 - gamma) * (1 - gamma) * (1 - mu), (1 - gamma) * gamma * mu, (1 - gamma) * gamma * (1 - mu), gamma * (1 - gamma) * mu, gamma * (1 - gamma) * (1 - mu), gamma * gamma * mu, gamma * gamma * (1 - mu)];
-    [(1 - gamma) * mu * (1 - gamma), (1 - gamma) * mu * gamma, (1 - gamma) * (1 - mu) * (1 - gamma), (1 - gamma) * (1 - mu) * gamma, gamma * mu * (1 - gamma), gamma * mu * gamma, gamma * (1 - mu) * (1 - gamma), gamma * (1 - mu) * gamma];
-    [(1 - gamma) * mu * mu, (1 - gamma) * mu * (1 - mu), (1 - gamma) * (1 - mu) * mu, (1 - gamma) * (1 - mu) * (1 - mu), gamma * mu * mu, gamma * mu * (1 - mu), gamma * (1 - mu) * mu, gamma * (1 - mu) * (1 - mu)];
-    [mu * (1 - gamma) * (1 - gamma), mu * (1 - gamma) * gamma, mu * gamma * (1 - gamma), mu * gamma * gamma, (1 - mu) * (1 - gamma) * (1 - gamma), (1 - mu) * (1 - gamma) * gamma, (1 - mu) * gamma * (1 - gamma), (1 - mu) * gamma * gamma];
-    [mu * (1 - gamma) * mu, mu * (1 - gamma) * (1 - mu), mu * gamma * mu, mu * gamma * (1 - mu), (1 - mu) * (1 - gamma) * mu, (1 - mu) * (1 - gamma) * (1 - mu), (1 - mu) * gamma * mu, (1 - mu) * gamma * (1 - mu)];
-    [mu * mu * (1 - gamma), mu * mu * gamma, mu * (1 - mu) * (1 - gamma), mu * (1 - mu) * gamma, (1 - mu) * mu * (1 - gamma), (1 - mu) * mu * gamma, (1 - mu) * (1 - mu) * (1 - gamma), (1 - mu) * (1 - mu) * gamma];
+    [(1 - numu) * (1 - numu) * (1 - numu), (1 - numu) * (1 - numu) * numu, (1 - numu) * numu * (1 - numu), (1 - numu) * numu * numu, numu * (1 - numu) * (1 - numu), numu * (1 - numu) * numu, numu * numu * (1 - numu), numu * numu * numu];
+    [(1 - numu) * (1 - numu) * mu, (1 - numu) * (1 - numu) * (1 - mu), (1 - numu) * numu * mu, (1 - numu) * numu * (1 - mu), numu * (1 - numu) * mu, numu * (1 - numu) * (1 - mu), numu * numu * mu, numu * numu * (1 - mu)];
+    [(1 - numu) * mu * (1 - numu), (1 - numu) * mu * numu, (1 - numu) * (1 - mu) * (1 - numu), (1 - numu) * (1 - mu) * numu, numu * mu * (1 - numu), numu * mu * numu, numu * (1 - mu) * (1 - numu), numu * (1 - mu) * numu];
+    [(1 - numu) * mu * mu, (1 - numu) * mu * (1 - mu), (1 - numu) * (1 - mu) * mu, (1 - numu) * (1 - mu) * (1 - mu), numu * mu * mu, numu * mu * (1 - mu), numu * (1 - mu) * mu, numu * (1 - mu) * (1 - mu)];
+    [mu * (1 - numu) * (1 - numu), mu * (1 - numu) * numu, mu * numu * (1 - numu), mu * numu * numu, (1 - mu) * (1 - numu) * (1 - numu), (1 - mu) * (1 - numu) * numu, (1 - mu) * numu * (1 - numu), (1 - mu) * numu * numu];
+    [mu * (1 - numu) * mu, mu * (1 - numu) * (1 - mu), mu * numu * mu, mu * numu * (1 - mu), (1 - mu) * (1 - numu) * mu, (1 - mu) * (1 - numu) * (1 - mu), (1 - mu) * numu * mu, (1 - mu) * numu * (1 - mu)];
+    [mu * mu * (1 - numu), mu * mu * numu, mu * (1 - mu) * (1 - numu), mu * (1 - mu) * numu, (1 - mu) * mu * (1 - numu), (1 - mu) * mu * numu, (1 - mu) * (1 - mu) * (1 - numu), (1 - mu) * (1 - mu) * numu];
     [mu + mu - mu * mu, 0, 0, 0, 0, 0, (1 - mu) * (1 - mu) * mu, 1 - (mu + mu - mu * mu) - (1 - mu) * (1 - mu) * mu];
     ];
 
@@ -71,13 +57,9 @@ H = (1 - phi) * Q + phi * P;
 
 %% B-group calculated parameters
 
-rho_group = 1 / lambda_group;
+rho = 1 / lambda;
 
-num_group_traits = 5;
-num_group_types = num_types;
-if two_cell_experiment
-    num_group_types = num_types * (num_types - 1) / 2 + num_types;
-    
+if two_cell_experiment   
     idx_group_types = tril(reshape(1:num_types^2, [num_types, num_types]), 0);
     idx_group_types = idx_group_types(:);
     idx_group_types = idx_group_types(idx_group_types > 0);
@@ -88,13 +70,13 @@ end
 % Centres
 
 % Age dimensions
-y_0 = y_0; % begginging of space
-y_end = y_end; % end of space
-dy = y_by; % change in space
+y_0 = t_0; % begginging of space
+y_end = t_end; % end of space
+dy = t_by; % change in space
 
 % Time dimensions
 t_0 = 0; % begginging of time
-t_end = lambda_group * 2500; % 2500 generations maximum end.
+t_end = lambda * 2500; % 2500 generations maximum end.
 dt = 0; % change in time (to be determined later by CFL condition)
 C = 0.95; % Courant number - proportion of maximum allowable time step
 
@@ -136,14 +118,14 @@ idx_edges = (num_ghosts + 1:num_edges + num_ghosts)';
 % Domains of interest.
 
 % Indices of initial group density. 
-idx_initial = num_ghosts + find(y_centres(idx_centres) >= 0 & y_centres(idx_centres) <= lambda_group);
+idx_initial = num_ghosts + find(y_centres(idx_centres) >= 0 & y_centres(idx_centres) <= lambda);
 
 % Indices of descendants.
 idx_descendants = num_ghosts + find(y_centres(idx_centres) >= 0 & y_centres(idx_centres) < 1);
 num_descendantCells = length(idx_descendants);
 
 % Indices of reproductives.
-idx_reproductives = num_ghosts + find(y_centres(idx_centres) >= alpha_group * lambda_group);
+idx_reproductives = num_ghosts + find(y_centres(idx_centres) >= alpha * lambda);
 
 %%
 
@@ -195,7 +177,7 @@ for i = 1:num_group_types
         z_group_t_y(y + num_ghosts, i, 1) = z_bar_y(y, i, 1);
         z_group_t_y(y + num_ghosts, i, 2) = z_bar_y(y, i, 2);
         z_group_t_y(y + num_ghosts, i, 3) = z_bar_y(y, i, 3);
-        z_group_t_y(y + num_ghosts, i, 4) = z_bar_y(y, i, 1) .* z_bar_y(y, i, 2) .* (1 - c_group .* z_bar_y(y, i, 3));            
+        z_group_t_y(y + num_ghosts, i, 4) = z_bar_y(y, i, 1) .* z_bar_y(y, i, 2) .* (1 - c_g .* z_bar_y(y, i, 3));            
     end
 end
 
@@ -222,7 +204,7 @@ end
 t = t_0;
 
 % Initial group density
-n_group_t_y(idx_initial, 1) = K_group;
+n_group_t_y(idx_initial, 1) = K_g;
 n_group_t_y = n_group_t_y / sum(n_group_t_y, [1, 2]);
 
 % Initial total group density
@@ -271,22 +253,22 @@ while t <= t_end
     %% Update group birth and death rates
         
     % Calculate group birth rates.
-    invest = 1 - s_group + s_group * (z_group_t_y(idx_centres, :, 5));
-    avgInvest = 1 - s_group + s_group * (z_bar_group_t(5));
+    invest = 1 - s_g + s_g * (z_group_t_y(idx_centres, :, 5));
+    avgInvest = 1 - s_g + s_g * (z_bar_group_t(5));
     b_group_t_y(idx_centres, :) = invest ./ avgInvest;
     
     % Calculate group production rates.    
     for i = 1:num_group_types                
         germ = sum(sum(b_group_t_y(idx_centres, :) .* n_group_t_y(idx_centres, :) .* squeeze(H_group_t_y(num_ghosts + 1, :, i))));
         no_germ = sum(sum(b_group_t_y(idx_centres, :) .* n_group_t_y(idx_centres, :) .* squeeze(H_group_t_y(idx_centres, :, i))));
-        p_group_t_y(idx_descendants, i) = gamma_group * germ + (1 - gamma_group) * no_germ;
+        p_group_t_y(idx_descendants, i) = numu * germ + (1 - numu) * no_germ;
     end
     p_group_t_y = p_group_t_y / num_descendantCells;
     
     % Calculate the death rates.
-    invest = 1 - s_group + s_group * (1 - z_group_t_y(idx_centres, :, 4));
-    avgInvest = 1 - s_group + s_group * (1 - z_bar_group_t(4));
-    d_group_t_y(idx_centres, :) = N_group_t / K_group * (invest / avgInvest);
+    invest = 1 - s_g + s_g * (1 - z_group_t_y(idx_centres, :, 4));
+    avgInvest = 1 - s_g + s_g * (1 - z_bar_group_t(4));
+    d_group_t_y(idx_centres, :) = N_group_t / K_g * (invest / avgInvest);
     
     %% Update boundary conditions.
     
@@ -299,7 +281,7 @@ while t <= t_end
     %% Update the group densities
     
     % Calculate the new group density from the between-group death dynamics.
-    n_group_t_y(idx_centres, :) = n_group_t_y(idx_centres, :) + dt * (- rho_group * n_group_t_y(idx_centres, :) .* d_group_t_y(idx_centres, :));
+    n_group_t_y(idx_centres, :) = n_group_t_y(idx_centres, :) + dt * (- rho * n_group_t_y(idx_centres, :) .* d_group_t_y(idx_centres, :));
     
     % Update slope function
     r_edges(idx_edges, :) = indicator_edges(idx_edges, :) .* ((n_group_t_y(idx_edges - 1, :) - n_group_t_y(idx_edges - 2, :)) ./ (n_group_t_y(idx_edges, :) - n_group_t_y(idx_edges - 1, :))) + ~indicator_edges(idx_edges, :) .* ((n_group_t_y(idx_edges + 1, :) - n_group_t_y(idx_edges, :)) ./ (n_group_t_y(idx_edges, :) - n_group_t_y(idx_edges - 1, :)));
@@ -321,7 +303,7 @@ while t <= t_end
     n_group_t_y(idx_centres, :) = n_group_t_y(idx_centres, :) - (dt / dy) * diff(flux_edges(idx_edges, :));
     
     % Calculate the new group density from the between-group production dynamics.
-    n_group_t_y(idx_centres, :) = n_group_t_y(idx_centres, :) + dt * (rho_group * p_group_t_y(idx_centres, :));
+    n_group_t_y(idx_centres, :) = n_group_t_y(idx_centres, :) + dt * (rho * p_group_t_y(idx_centres, :));
     
     % Increment time.
     t = t + dt;
@@ -332,7 +314,7 @@ while t <= t_end
     if t >= t_step
         
         % Next time step.
-        t_step = t_step + y_by;
+        t_step = t_step + dy;
         
         % Store group density outputs.
         n_group_output(t_step, :, :) = n_group_t_y;
@@ -343,7 +325,7 @@ while t <= t_end
     end        
     
     % Break if system reaches steady state.   
-    if t_step > 5000 && t_step > lambda_group * 10 && sum(sum(abs(n_group_output(t_step, :, :) - n_group_output(t_step - lambda_group * 10, :, :)) <= 1e-6) == num_centres + 2 * num_ghosts) == num_group_types
+    if t_step > 5000 && t_step > lambda * 10 && sum(sum(abs(n_group_output(t_step, :, :) - n_group_output(t_step - lambda * 10, :, :)) <= 1e-6) == num_centres + 2 * num_ghosts) == num_group_types
         disp(['Final time: ', num2str(t_step)]);
         break
     end
@@ -372,9 +354,9 @@ z_bar_t = zeros(t_final, num_traits);
 for k = 1:t_final
 
     % Calculate individual quantities
-    for i = 1:num_group_types
-        for y = 1:num_centres                       
-            for j = 1:num_types
+    for i = 1:num_group_types % every group type
+        for y = 1:num_centres % every age class                 
+            for j = 1:num_types % every cell type
                 n_t(k, j) = n_t(k, j) + n_group_t_y(k, y, i) .* n_y(y, i, j);
                 z_bar_t(k, :) = z_bar_t(k, :) + n_group_t_y(k, y, i) .* n_y(y, i, j) * Z(j, :);
             end

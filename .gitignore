@@ -1,0 +1,13 @@
+# exclude result files
+figures/within-group/*
+figures/between-group/*
+cell_results/*
+processed_cell_results/*
+group_results/*
+
+# keep the result folders as important for code to run
+figures/within-group/.gitkeep 
+figures/between-group/.gitkeep 
+!cell_results/.gitkeep 
+!processed_cell_results/.gitkeep
+!group_results/.gitkeep

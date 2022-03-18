@@ -1,72 +1,44 @@
-function [n_output, fe_count_output, fe_b_output, fe_d_output] = withinGroupStochasticFunctionTwoCell(verbose, cooperation_experiment, replicates, t_0, t_by, t_end, rho, K, s, p, mu, nu)
-
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+function [n_output, fe_count_output, fe_b_output, fe_d_output] = within_group_dynamics_two_cell(verbose, cooperation_experiment, replicates, t_0, t_by, t_end, rho, K, s_c, phi, mu, nu, num_traits, num_types, Z)
 
 tic;
 
 %% Parameters
 
 two_cell_experiment = 1;
-cooperation_experiment = cooperation_experiment;
-replicates = replicates;
 
-t_0 = t_0;
-t_by = t_by;
-t_end = t_end;
+%% Within-group calculated parameters
 
-rho = rho;
-K = K;
-s = s;
-p = p;
+numu = nu * mu;
 
-mu = mu;
-nu = nu;
-gamma = nu * mu;
-
-num_traits = 3;
-num_types = 2^num_traits;
-
-Z = [
-    0, 0, 0;
-    0, 0, 1;
-    0, 1, 0;
-    0, 1, 1;
-    1, 0, 0;
-    1, 0, 1;
-    1, 1, 0;
-    1, 1, 1
-    ];
-
-M_base_t0 = [
-    [(1 - gamma) * (1 - gamma) * (1 - gamma), (1 - gamma) * (1 - gamma) * gamma, (1 - gamma) * gamma * (1 - gamma), (1 - gamma) * gamma * gamma, gamma * (1 - gamma) * (1 - gamma), gamma * (1 - gamma) * gamma, gamma * gamma * (1 - gamma), gamma * gamma * gamma];
-    [(1 - gamma) * (1 - gamma) * mu, (1 - gamma) * (1 - gamma) * (1 - mu), (1 - gamma) * gamma * mu, (1 - gamma) * gamma * (1 - mu), gamma * (1 - gamma) * mu, gamma * (1 - gamma) * (1 - mu), gamma * gamma * mu, gamma * gamma * (1 - mu)];
-    [(1 - gamma) * mu * (1 - gamma), (1 - gamma) * mu * gamma, (1 - gamma) * (1 - mu) * (1 - gamma), (1 - gamma) * (1 - mu) * gamma, gamma * mu * (1 - gamma), gamma * mu * gamma, gamma * (1 - mu) * (1 - gamma), gamma * (1 - mu) * gamma];
-    [(1 - gamma) * mu * mu, (1 - gamma) * mu * (1 - mu), (1 - gamma) * (1 - mu) * mu, (1 - gamma) * (1 - mu) * (1 - mu), gamma * mu * mu, gamma * mu * (1 - mu), gamma * (1 - mu) * mu, gamma * (1 - mu) * (1 - mu)];
-    [mu * (1 - gamma) * (1 - gamma), mu * (1 - gamma) * gamma, mu * gamma * (1 - gamma), mu * gamma * gamma, (1 - mu) * (1 - gamma) * (1 - gamma), (1 - mu) * (1 - gamma) * gamma, (1 - mu) * gamma * (1 - gamma), (1 - mu) * gamma * gamma];
-    [mu * (1 - gamma) * mu, mu * (1 - gamma) * (1 - mu), mu * gamma * mu, mu * gamma * (1 - mu), (1 - mu) * (1 - gamma) * mu, (1 - mu) * (1 - gamma) * (1 - mu), (1 - mu) * gamma * mu, (1 - mu) * gamma * (1 - mu)];
-    [mu * mu * (1 - gamma), mu * mu * gamma, mu * (1 - mu) * (1 - gamma), mu * (1 - mu) * gamma, (1 - mu) * mu * (1 - gamma), (1 - mu) * mu * gamma, (1 - mu) * (1 - mu) * (1 - gamma), (1 - mu) * (1 - mu) * gamma];
+Q = [
+    [(1 - numu) * (1 - numu) * (1 - numu), (1 - numu) * (1 - numu) * numu, (1 - numu) * numu * (1 - numu), (1 - numu) * numu * numu, numu * (1 - numu) * (1 - numu), numu * (1 - numu) * numu, numu * numu * (1 - numu), numu * numu * numu];
+    [(1 - numu) * (1 - numu) * mu, (1 - numu) * (1 - numu) * (1 - mu), (1 - numu) * numu * mu, (1 - numu) * numu * (1 - mu), numu * (1 - numu) * mu, numu * (1 - numu) * (1 - mu), numu * numu * mu, numu * numu * (1 - mu)];
+    [(1 - numu) * mu * (1 - numu), (1 - numu) * mu * numu, (1 - numu) * (1 - mu) * (1 - numu), (1 - numu) * (1 - mu) * numu, numu * mu * (1 - numu), numu * mu * numu, numu * (1 - mu) * (1 - numu), numu * (1 - mu) * numu];
+    [(1 - numu) * mu * mu, (1 - numu) * mu * (1 - mu), (1 - numu) * (1 - mu) * mu, (1 - numu) * (1 - mu) * (1 - mu), numu * mu * mu, numu * mu * (1 - mu), numu * (1 - mu) * mu, numu * (1 - mu) * (1 - mu)];
+    [mu * (1 - numu) * (1 - numu), mu * (1 - numu) * numu, mu * numu * (1 - numu), mu * numu * numu, (1 - mu) * (1 - numu) * (1 - numu), (1 - mu) * (1 - numu) * numu, (1 - mu) * numu * (1 - numu), (1 - mu) * numu * numu];
+    [mu * (1 - numu) * mu, mu * (1 - numu) * (1 - mu), mu * numu * mu, mu * numu * (1 - mu), (1 - mu) * (1 - numu) * mu, (1 - mu) * (1 - numu) * (1 - mu), (1 - mu) * numu * mu, (1 - mu) * numu * (1 - mu)];
+    [mu * mu * (1 - numu), mu * mu * numu, mu * (1 - mu) * (1 - numu), mu * (1 - mu) * numu, (1 - mu) * mu * (1 - numu), (1 - mu) * mu * numu, (1 - mu) * (1 - mu) * (1 - numu), (1 - mu) * (1 - mu) * numu];
     [mu * mu * mu, mu * mu * (1 - mu), mu * (1 - mu) * mu, mu * (1 - mu) * (1 - mu), (1 - mu) * mu * mu, (1 - mu) * mu  * (1 - mu), (1 - mu) * (1 - mu) * mu, (1 - mu) * (1 - mu) * (1 - mu)];
     ];
 
-M_pleiotropy_t0 = [
-    [(1 - gamma) * (1 - gamma) * (1 - gamma), (1 - gamma) * (1 - gamma) * gamma, (1 - gamma) * gamma * (1 - gamma), (1 - gamma) * gamma * gamma, gamma * (1 - gamma) * (1 - gamma), gamma * (1 - gamma) * gamma, gamma * gamma * (1 - gamma), gamma * gamma * gamma];
-    [(1 - gamma) * (1 - gamma) * mu, (1 - gamma) * (1 - gamma) * (1 - mu), (1 - gamma) * gamma * mu, (1 - gamma) * gamma * (1 - mu), gamma * (1 - gamma) * mu, gamma * (1 - gamma) * (1 - mu), gamma * gamma * mu, gamma * gamma * (1 - mu)];
-    [(1 - gamma) * mu * (1 - gamma), (1 - gamma) * mu * gamma, (1 - gamma) * (1 - mu) * (1 - gamma), (1 - gamma) * (1 - mu) * gamma, gamma * mu * (1 - gamma), gamma * mu * gamma, gamma * (1 - mu) * (1 - gamma), gamma * (1 - mu) * gamma];
-    [(1 - gamma) * mu * mu, (1 - gamma) * mu * (1 - mu), (1 - gamma) * (1 - mu) * mu, (1 - gamma) * (1 - mu) * (1 - mu), gamma * mu * mu, gamma * mu * (1 - mu), gamma * (1 - mu) * mu, gamma * (1 - mu) * (1 - mu)];
-    [mu * (1 - gamma) * (1 - gamma), mu * (1 - gamma) * gamma, mu * gamma * (1 - gamma), mu * gamma * gamma, (1 - mu) * (1 - gamma) * (1 - gamma), (1 - mu) * (1 - gamma) * gamma, (1 - mu) * gamma * (1 - gamma), (1 - mu) * gamma * gamma];
-    [mu * (1 - gamma) * mu, mu * (1 - gamma) * (1 - mu), mu * gamma * mu, mu * gamma * (1 - mu), (1 - mu) * (1 - gamma) * mu, (1 - mu) * (1 - gamma) * (1 - mu), (1 - mu) * gamma * mu, (1 - mu) * gamma * (1 - mu)];
-    [mu * mu * (1 - gamma), mu * mu * gamma, mu * (1 - mu) * (1 - gamma), mu * (1 - mu) * gamma, (1 - mu) * mu * (1 - gamma), (1 - mu) * mu * gamma, (1 - mu) * (1 - mu) * (1 - gamma), (1 - mu) * (1 - mu) * gamma];
+P = [
+    [(1 - numu) * (1 - numu) * (1 - numu), (1 - numu) * (1 - numu) * numu, (1 - numu) * numu * (1 - numu), (1 - numu) * numu * numu, numu * (1 - numu) * (1 - numu), numu * (1 - numu) * numu, numu * numu * (1 - numu), numu * numu * numu];
+    [(1 - numu) * (1 - numu) * mu, (1 - numu) * (1 - numu) * (1 - mu), (1 - numu) * numu * mu, (1 - numu) * numu * (1 - mu), numu * (1 - numu) * mu, numu * (1 - numu) * (1 - mu), numu * numu * mu, numu * numu * (1 - mu)];
+    [(1 - numu) * mu * (1 - numu), (1 - numu) * mu * numu, (1 - numu) * (1 - mu) * (1 - numu), (1 - numu) * (1 - mu) * numu, numu * mu * (1 - numu), numu * mu * numu, numu * (1 - mu) * (1 - numu), numu * (1 - mu) * numu];
+    [(1 - numu) * mu * mu, (1 - numu) * mu * (1 - mu), (1 - numu) * (1 - mu) * mu, (1 - numu) * (1 - mu) * (1 - mu), numu * mu * mu, numu * mu * (1 - mu), numu * (1 - mu) * mu, numu * (1 - mu) * (1 - mu)];
+    [mu * (1 - numu) * (1 - numu), mu * (1 - numu) * numu, mu * numu * (1 - numu), mu * numu * numu, (1 - mu) * (1 - numu) * (1 - numu), (1 - mu) * (1 - numu) * numu, (1 - mu) * numu * (1 - numu), (1 - mu) * numu * numu];
+    [mu * (1 - numu) * mu, mu * (1 - numu) * (1 - mu), mu * numu * mu, mu * numu * (1 - mu), (1 - mu) * (1 - numu) * mu, (1 - mu) * (1 - numu) * (1 - mu), (1 - mu) * numu * mu, (1 - mu) * numu * (1 - mu)];
+    [mu * mu * (1 - numu), mu * mu * numu, mu * (1 - mu) * (1 - numu), mu * (1 - mu) * numu, (1 - mu) * mu * (1 - numu), (1 - mu) * mu * numu, (1 - mu) * (1 - mu) * (1 - numu), (1 - mu) * (1 - mu) * numu];
     [mu + mu - mu * mu, 0, 0, 0, 0, 0, (1 - mu) * (1 - mu) * mu, 1 - (mu + mu - mu * mu) - (1 - mu) * (1 - mu) * mu];
     ];
 
-H = (1 - p) * M_base_t0 + p * M_pleiotropy_t0;
+H = (1 - phi) * Q + phi * P;
 
 %% Output
 
 id = string(java.util.UUID.randomUUID.toString);
 
-filename_within_output = sprintf('results/two%d_coop%d_rep%d_tend%d_rho%g_K%d_s%g_p%g_mu%g_nu%g', two_cell_experiment, cooperation_experiment, replicates, t_end, rho, K, s, p, mu, nu);
+filename_within_output = sprintf('cell_results/two%d_coop%d_rep%d_tend%d_rho%g_K%d_s%g_p%g_mu%g_nu%g', two_cell_experiment, cooperation_experiment, replicates, t_end, rho, K, s_c, phi, mu, nu);
 filename_within_output = strrep(filename_within_output, '.', '-');
 filename_within_output = strcat(filename_within_output, '_id_', id);
 filename_within_output = strcat(filename_within_output, '.mat');
@@ -123,11 +95,11 @@ for j = 1:num_types
                     Z_t = Z_t0;
                     z_bar_t = Z_t' * x_t;
                     
-                    b_t = rho .* ((1 - s + s * (Z_t(:, 1))) ./ (1 - s + s * (z_bar_t(1)))) * 1;
+                    b_t = rho .* ((1 - s_c + s_c * (Z_t(:, 1))) ./ (1 - s_c + s_c * (z_bar_t(1)))) * 1;
                     if cooperation_experiment
-                        b_t = rho .* ((1 - s + s * (1 - Z_t(:, 1))) ./ (1 - s + s * (1 - z_bar_t(1)))) * 1;
+                        b_t = rho .* ((1 - s_c + s_c * (1 - Z_t(:, 1))) ./ (1 - s_c + s_c * (1 - z_bar_t(1)))) * 1;
                     end
-                    d_t = rho .* ((1 - s + s * (1 - Z_t(:, 2))) ./ (1 - s + s * (1 - z_bar_t(2)))) * (N_t - 1) / K;
+                    d_t = rho .* ((1 - s_c + s_c * (1 - Z_t(:, 2))) ./ (1 - s_c + s_c * (1 - z_bar_t(2)))) * (N_t - 1) / K;
                     p_t = H_t' * diag(n_t) * b_t;
                     
                     b_bar_t = b_t' * x_t;
@@ -176,11 +148,11 @@ for j = 1:num_types
                             fe_Z_t = Z_t0;
                             fe_z_bar_t = fe_Z_t' * fe_x_t;
                             
-                            fe_b_t = rho .* ((1 - s + s * (fe_Z_t(:, 1))) ./ (1 - s + s * (fe_z_bar_t(1)))) * 1;
+                            fe_b_t = rho .* ((1 - s_c + s_c * (fe_Z_t(:, 1))) ./ (1 - s_c + s_c * (fe_z_bar_t(1)))) * 1;
                             if cooperation_experiment
-                                fe_b_t = rho .* ((1 - s + s * (1 - fe_Z_t(:, 1))) ./ (1 - s + s * (1 - fe_z_bar_t(1)))) * 1;
+                                fe_b_t = rho .* ((1 - s_c + s_c * (1 - fe_Z_t(:, 1))) ./ (1 - s_c + s_c * (1 - fe_z_bar_t(1)))) * 1;
                             end
-                            fe_d_t = rho .* ((1 - s + s * (1 - fe_Z_t(:, 2))) ./ (1 - s + s * (1 - fe_z_bar_t(2)))) * (fe_N_t - 1) / K;
+                            fe_d_t = rho .* ((1 - s_c + s_c * (1 - fe_Z_t(:, 2))) ./ (1 - s_c + s_c * (1 - fe_z_bar_t(2)))) * (fe_N_t - 1) / K;
                             
                             fe_count_output(t_step, focal_type_a, focal_type_b, replicate, idx_birth, idx_produced) = fe_count_output(t_step, focal_type_a, focal_type_b, replicate, idx_birth, idx_produced) + 1;
                             fe_b_output(t_step, focal_type_a, focal_type_b, replicate, idx_birth, idx_produced) = fe_b_output(t_step, focal_type_a, focal_type_b, replicate, idx_birth, idx_produced) + fe_b_t(idx_produced) / fe_b_t(idx_birth);
